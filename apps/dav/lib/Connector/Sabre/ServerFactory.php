@@ -57,6 +57,7 @@ use OCP\SystemTag\ISystemTagObjectMapper;
 use Psr\Log\LoggerInterface;
 use Sabre\DAV\Auth\Plugin;
 use Sabre\DAV\Exception;
+use Sabre\DAV\SimpleCollection;
 
 class ServerFactory {
 	/** @var IConfig */
@@ -129,7 +130,7 @@ class ServerFactory {
 								 Plugin   $authPlugin,
 								 callable $viewCallBack): Server {
 		// Fire up server
-		$objectTree = new ObjectTree();
+		$objectTree = new ObjectTree(new SimpleCollection('root'));
 		$server = new Server($objectTree);
 		// Set URL explicitly due to reverse-proxy situations
 		$server->httpRequest->setUrl($requestUri);
@@ -168,6 +169,7 @@ class ServerFactory {
 			if ($user = \OC::$server->get(IUserSession::class)->getUser()) {
 				/** @var IRootFolder $root */
 				$rootInfo = $root->getUserFolder($user->getUID());
+				$userFolder = $rootInfo;
 			} else {
 				$rootInfo = $root;
 			}
@@ -194,7 +196,7 @@ class ServerFactory {
 					!$this->config->getSystemValue('debug', false)
 				)
 			);
-			$server->addPlugin(new QuotaPlugin($view, true));
+			$server->addPlugin(new QuotaPlugin($view));
 
 			if ($this->userSession->isLoggedIn()) {
 				$server->addPlugin(new TagsPlugin($objectTree, $this->tagManager));
