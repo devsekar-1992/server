@@ -43,7 +43,7 @@ class CleanupInvitationTokenJobTest extends TestCase {
 	/** @var ITimeFactory | \PHPUnit\Framework\MockObject\MockObject */
 	private $timeFactory;
 
-	/** @var \OCA\DAV\BackgroundJob\GenerateBirthdayCalendarBackgroundJob */
+	/** @var \OCA\DAV\BackgroundJob\CleanupInvitationTokenJob */
 	private $backgroundJob;
 
 	protected function setUp(): void {
