@@ -31,22 +31,16 @@ use Exception;
 use OC\App\AppManager;
 use OC\Contacts\ContactsMenu\Providers\EMailProvider;
 use OC\Contacts\ContactsMenu\Providers\ProfileProvider;
-use OCP\AppFramework\QueryException;
 use OCP\Contacts\ContactsMenu\IProvider;
 use OCP\IServerContainer;
 use OCP\IUser;
+use Psr\Container\ContainerExceptionInterface;
 use Psr\Log\LoggerInterface;
 
 class ActionProviderStore {
-
-	/** @var IServerContainer */
-	private $serverContainer;
-
-	/** @var AppManager */
-	private $appManager;
-
-	/** @var LoggerInterface */
-	private $logger;
+	private IServerContainer $serverContainer;
+	private AppManager $appManager;
+	private LoggerInterface $logger;
 
 	public function __construct(IServerContainer $serverContainer, AppManager $appManager, LoggerInterface $logger) {
 		$this->serverContainer = $serverContainer;
@@ -67,8 +61,8 @@ class ActionProviderStore {
 
 		foreach ($allClasses as $class) {
 			try {
-				$providers[] = $this->serverContainer->query($class);
-			} catch (QueryException $ex) {
+				$providers[] = $this->serverContainer->get($class);
+			} catch (ContainerExceptionInterface $ex) {
 				$this->logger->error(
 					'Could not load contacts menu action provider ' . $class,
 					[
