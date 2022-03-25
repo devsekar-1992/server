@@ -164,12 +164,11 @@ class FederatedShareProvider implements IShareProvider {
 	 * Share a path
 	 *
 	 * @param IShare $share
-	 * @param bool $sendPassword 
 	 * @return IShare The share object
 	 * @throws ShareNotFound
 	 * @throws \Exception
 	 */
-	public function create(IShare $share, $sendPassword = true) {
+	public function create(IShare $share) {
 		$shareWith = $share->getSharedWith();
 		$itemSource = $share->getNodeId();
 		$itemType = $share->getNodeType();

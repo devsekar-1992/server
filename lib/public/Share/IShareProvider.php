@@ -49,11 +49,10 @@ interface IShareProvider {
 	 * Create a share
 	 *
 	 * @param \OCP\Share\IShare $share
-	 * @param bool $sendPassword Whether the password should be sent by email or not
 	 * @return \OCP\Share\IShare The share object
 	 * @since 9.0.0
 	 */
-	public function create(\OCP\Share\IShare $share, bool $sendPassword = true);
+	public function create(\OCP\Share\IShare $share);
 
 	/**
 	 * Update a share

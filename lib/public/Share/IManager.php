@@ -47,12 +47,11 @@ interface IManager {
 	 * Create a Share
 	 *
 	 * @param IShare $share
-	 * @param bool $sendPassword Set to true to make sure share password isn't sent
 	 * @return IShare The share object
 	 * @throws \Exception
 	 * @since 9.0.0
 	 */
-	public function createShare(IShare $share, bool $sendPassword = true);
+	public function createShare(IShare $share);
 
 	/**
 	 * Update a share.

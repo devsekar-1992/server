@@ -126,12 +126,11 @@ class DefaultShareProvider implements IShareProvider {
 	 * Share a path
 	 *
 	 * @param \OCP\Share\IShare $share
-	 * @param bool $sendPassword whether the password should be sent to the user or not
 	 * @return \OCP\Share\IShare The share object
 	 * @throws ShareNotFound
 	 * @throws \Exception
 	 */
-	public function create(\OCP\Share\IShare $share, bool $sendPassword = true) {
+	public function create(\OCP\Share\IShare $share) {
 		$qb = $this->dbConn->getQueryBuilder();
 
 		$qb->insert('share');
@@ -1006,7 +1005,6 @@ class DefaultShareProvider implements IShareProvider {
 	 * Create a share object from an database row
 	 *
 	 * @param mixed[] $data
-	 * @param bool $sendPassword
 	 * @return \OCP\Share\IShare
 	 * @throws InvalidShare
 	 */
