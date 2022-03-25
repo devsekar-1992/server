@@ -94,7 +94,7 @@ interface IManager {
 
 	/**
 	 * @since 24.0.0
-	 * @return array
+	 * @return IEditor[]
 	 */
 	public function getEditors(): array;
 }

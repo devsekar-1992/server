@@ -62,11 +62,11 @@ class LockManager implements ILockManager {
 		return $this->lockProvider->lock($lockInfo);
 	}
 
-	public function unlock(LockScope $lockInfo) {
+	public function unlock(LockScope $lockInfo): void {
 		if (!$this->lockProvider) {
 			throw new PreConditionNotMetException('No lock provider available');
 		}
 
-		return $this->lockProvider->unlock($lockInfo);
+		$this->lockProvider->unlock($lockInfo);
 	}
 }
