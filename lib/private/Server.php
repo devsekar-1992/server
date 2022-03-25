@@ -1107,7 +1107,7 @@ class Server extends ServerContainer implements IServerContainer {
 		/** @deprecated 19.0.0 */
 		$this->registerDeprecatedAlias('LockingProvider', ILockingProvider::class);
 
-		$this->registerService(ILockManager::class, function (Server $c) {
+		$this->registerService(ILockManager::class, function (Server $c): LockManager {
 			return new LockManager();
 		});
 
