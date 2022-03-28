@@ -1520,10 +1520,11 @@ class ShareAPIController extends OCSController {
 			$share->setPasswordExpirationTime();
 		} else {
 			// Sets password expiration date
+			$expirationTime = null;	
 			try {
 				$now = new \DateTime();
 				$expirationInterval = $this->config->getSystemValue('share_temporary_password_expiration_interval');
-				if ($expirationInterval === '') {
+				if ($expirationInterval === '' || is_null($expirationInterval)) {
 					$expirationInterval = 'P0DT15M';
 				}
 				$expirationTime = $now->add(new \DateInterval($expirationInterval));

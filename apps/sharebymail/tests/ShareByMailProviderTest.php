@@ -39,6 +39,7 @@ use OCP\Defaults;
 use OCP\EventDispatcher\IEventDispatcher;
 use OCP\Files\File;
 use OCP\Files\IRootFolder;
+use OCP\IConfig;
 use OCP\IDBConnection;
 use OCP\IL10N;
 use OCP\ILogger;
@@ -62,6 +63,9 @@ use Test\TestCase;
  * @group DB
  */
 class ShareByMailProviderTest extends TestCase {
+
+	/** @var IConfig */
+	private $config;
 
 	/** @var  IDBConnection */
 	private $connection;
@@ -118,6 +122,7 @@ class ShareByMailProviderTest extends TestCase {
 			->willReturnCallback(function ($text, $parameters = []) {
 				return vsprintf($text, $parameters);
 			});
+		$this->config = $this->getMockBuilder(IConfig::class)->getMock();
 		$this->logger = $this->getMockBuilder(ILogger::class)->getMock();
 		$this->rootFolder = $this->getMockBuilder('OCP\Files\IRootFolder')->getMock();
 		$this->userManager = $this->getMockBuilder(IUserManager::class)->getMock();
@@ -145,6 +150,7 @@ class ShareByMailProviderTest extends TestCase {
 		$instance = $this->getMockBuilder('OCA\ShareByMail\ShareByMailProvider')
 			->setConstructorArgs(
 				[
+					$this->config,
 					$this->connection,
 					$this->secureRandom,
 					$this->userManager,
@@ -168,6 +174,7 @@ class ShareByMailProviderTest extends TestCase {
 		}
 
 		return new ShareByMailProvider(
+			$this->config,
 			$this->connection,
 			$this->secureRandom,
 			$this->userManager,
@@ -546,6 +553,7 @@ class ShareByMailProviderTest extends TestCase {
 				$permissions,
 				$token,
 				$password,
+				null,
 				$sendPasswordByTalk,
 				$hideDownload,
 				$label,

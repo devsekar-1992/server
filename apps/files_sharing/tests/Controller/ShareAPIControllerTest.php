@@ -4366,6 +4366,7 @@ class ShareAPIControllerTest extends TestCase {
 				'hide_download' => 0,
 				'can_edit' => false,
 				'can_delete' => false,
+				'password_expiration_time' => null,
 			], $share, [], false
 		];
 
@@ -4415,6 +4416,7 @@ class ShareAPIControllerTest extends TestCase {
 				'hide_download' => 0,
 				'can_edit' => false,
 				'can_delete' => false,
+				'password_expiration_time' => null,
 			], $share, [], false
 		];
 
