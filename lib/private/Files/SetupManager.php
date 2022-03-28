@@ -321,25 +321,32 @@ class SetupManager {
 	}
 
 	/**
-	 * Set up the filesystem for the specified path
+	 * Get the user to setup for a path or `null` if the root needs to be setup
+	 *
+	 * @param string $path
+	 * @return IUser|null
 	 */
-	public function setupForPath(string $path, bool $includeChildren = false): void {
+	private function getUserForPath(string $path) {
 		if (substr_count($path, '/') < 2) {
 			if ($user = $this->userSession->getUser()) {
-				$this->setupForUser($user);
+				return $user;
 			} else {
-				$this->setupRoot();
+				return null;
 			}
-			return;
 		} elseif (strpos($path, '/appdata_' . \OC_Util::getInstanceId()) === 0 || strpos($path, '/files_external/') === 0) {
-			$this->setupRoot();
-			return;
+			return null;
 		} else {
 			[, $userId] = explode('/', $path);
 		}
 
-		$user = $this->userManager->get($userId);
+		return $this->userManager->get($userId);
+	}
 
+	/**
+	 * Set up the filesystem for the specified path
+	 */
+	public function setupForPath(string $path, bool $includeChildren = false): void {
+		$user = $this->getUserForPath($path);
 		if (!$user) {
 			$this->setupRoot();
 			return;
@@ -381,7 +388,7 @@ class SetupManager {
 			$setupProviders[] = $cachedMount->getMountProvider();
 			$currentProviders[] = $cachedMount->getMountProvider();
 			if ($cachedMount->getMountProvider()) {
-				$mounts = $this->mountProviderCollection->getUserMountsForProviderClass($user, $cachedMount->getMountProvider());
+				$mounts = $this->mountProviderCollection->getUserMountsForProviderClasses($user, [$cachedMount->getMountProvider()]);
 			} else {
 				$this->logger->debug("mount at " . $cachedMount->getMountPoint() . " has no provider set, performing full setup");
 				$this->setupForUser($user);
@@ -396,7 +403,7 @@ class SetupManager {
 					$setupProviders[] = $cachedMount->getMountProvider();
 					$currentProviders[] = $cachedMount->getMountProvider();
 					if ($cachedMount->getMountProvider()) {
-						$mounts = array_merge($mounts, $this->mountProviderCollection->getUserMountsForProviderClass($user, $cachedMount->getMountProvider()));
+						$mounts = array_merge($mounts, $this->mountProviderCollection->getUserMountsForProviderClasses($user, [$cachedMount->getMountProvider()]));
 					} else {
 						$this->logger->debug("mount at " . $cachedMount->getMountPoint() . " has no provider set, performing full setup");
 						$this->setupForUser($user);
@@ -414,6 +421,35 @@ class SetupManager {
 		} elseif (!$this->isSetupStarted($user)) {
 			$this->oneTimeUserSetup($user);
 		}
+	}
+
+	/**
+	 * @param string $path
+	 * @param string[] $provider
+	 */
+	public function setupForProvider(string $path, array $providers): void {
+		$user = $this->getUserForPath($path);
+		if (!$user) {
+			$this->setupRoot();
+			return;
+		}
+
+		if (in_array('', $providers)) {
+			$this->setupForUser($user);
+		}
+		$setupProviders = $this->setupUserMountProviders[$user->getUID()];
+
+		if (array_intersect($providers, $setupProviders) === $providers) {
+			return;
+		} else {
+			$this->setupUserMountProviders[$user->getUID()] = array_merge($setupProviders, $providers);
+			$mounts = $this->mountProviderCollection->getUserMountsForProviderClasses($user, $providers);
+		}
+
+		$this->userMountCache->registerMounts($user, $mounts, $providers);
+		$this->setupForUserWith($user, function () use ($mounts) {
+			array_walk($mounts, [$this->mountManager, 'addMount']);
+		});
 	}
 
 	public function tearDown() {
