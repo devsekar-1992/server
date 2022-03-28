@@ -44,6 +44,7 @@ use OCP\EventDispatcher\IEventDispatcher;
 use OCP\Files\Config\IUserMountCache;
 use OCP\Files\Events\Node\FilesystemTornDownEvent;
 use OCP\Files\IRootFolder;
+use OCP\Files\Mount\IMountPoint;
 use OCP\Files\NotFoundException;
 use OCP\Files\NotPermittedException;
 use OCP\ILogger;
@@ -406,5 +407,78 @@ class Root extends Folder implements IRootFolder {
 
 	public function getUserMountCache() {
 		return $this->userMountCache;
+	}
+
+	/**
+	 * @param int $id
+	 * @return \OC\Files\Node\Node[]
+	 */
+	public function getByIdInPath(int $id, string $path) {
+		$mountCache = $this->getUserMountCache();
+		if (strpos($path, '/', 1) > 0) {
+			[, $user] = explode('/', $path);
+		} else {
+			$user = null;
+		}
+		$mountsContainingFile = $mountCache->getMountsForFileId($id, $user);
+
+		// when a user has access trough the same storage trough multiple paths
+		// (such as an external storage that is both mounted for a user and shared to the user)
+		// the mount cache will only hold a single entry for the storage
+		// this can lead to issues as the different ways the user has access to a storage can have different permissions
+		//
+		// so instead of using the cached entries directly, we instead filter the current mounts by the rootid of the cache entry
+
+		$mountRootIds = array_map(function ($mount) {
+			return $mount->getRootId();
+		}, $mountsContainingFile);
+		$mountRootPaths = array_map(function ($mount) {
+			return $mount->getRootInternalPath();
+		}, $mountsContainingFile);
+		$mountProviders = array_unique(array_map(function($mount) {
+			return $mount->getMountProvider();
+		}, $mountsContainingFile));
+		$mountRoots = array_combine($mountRootIds, $mountRootPaths);
+
+		$mounts = $this->mountManager->getMountsByMountProvider($path, $mountProviders);
+
+		$mountsContainingFile = array_filter($mounts, function ($mount) use ($mountRoots) {
+			return isset($mountRoots[$mount->getStorageRootId()]);
+		});
+
+		if (count($mountsContainingFile) === 0) {
+			if ($user === $this->getAppDataDirectoryName()) {
+				return $this->get($path)->getByIdInRootMount($id);
+			}
+			return [];
+		}
+
+		$nodes = array_map(function (IMountPoint $mount) use ($id, $mountRoots) {
+			$rootInternalPath = $mountRoots[$mount->getStorageRootId()];
+			$cacheEntry = $mount->getStorage()->getCache()->get($id);
+			if (!$cacheEntry) {
+				return null;
+			}
+
+			// cache jails will hide the "true" internal path
+			$internalPath = ltrim($rootInternalPath . '/' . $cacheEntry->getPath(), '/');
+			$pathRelativeToMount = substr($internalPath, strlen($rootInternalPath));
+			$pathRelativeToMount = ltrim($pathRelativeToMount, '/');
+			$absolutePath = rtrim($mount->getMountPoint() . $pathRelativeToMount, '/');
+			return $this->createNode($absolutePath, new FileInfo(
+				$absolutePath, $mount->getStorage(), $cacheEntry->getPath(), $cacheEntry, $mount,
+				\OC::$server->getUserManager()->get($mount->getStorage()->getOwner($pathRelativeToMount))
+			));
+		}, $mountsContainingFile);
+
+		$nodes = array_filter($nodes);
+
+		$folders = array_filter($nodes, function (Node $node) use ($path) {
+			return PathHelper::getRelativePath($path, $node->getPath());
+		});
+		usort($folders, function ($a, $b) {
+			return $b->getPath() <=> $a->getPath();
+		});
+		return $folders;
 	}
 }

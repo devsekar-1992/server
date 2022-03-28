@@ -25,7 +25,9 @@ declare(strict_types=1);
  */
 namespace OC\Files\Node;
 
+use OC\Files\Utils\PathHelper;
 use OCP\Constants;
+use function OC\Files\Utils\getRelativePath;
 
 /**
  * Class LazyFolder
@@ -382,13 +384,6 @@ class LazyFolder implements \OCP\Files\Folder {
 	/**
 	 * @inheritDoc
 	 */
-	public function getRelativePath($path) {
-		return $this->__call(__FUNCTION__, func_get_args());
-	}
-
-	/**
-	 * @inheritDoc
-	 */
 	public function isSubNode($node) {
 		return $this->__call(__FUNCTION__, func_get_args());
 	}
@@ -517,5 +512,9 @@ class LazyFolder implements \OCP\Files\Folder {
 	 */
 	public function getUploadTime(): int {
 		return $this->__call(__FUNCTION__, func_get_args());
+	}
+
+	public function getRelativePath($path) {
+		return PathHelper::getRelativePath($this->getPath(), $path);
 	}
 }
